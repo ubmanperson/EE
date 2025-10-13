@@ -16,7 +16,7 @@ class kNN:
 
     def predict(self, X):
         prediction = [self._predict(x) for x in X]
-        return prediction
+        return np.array(prediction)
 
     def _predict(self, x):
         distances = [euclid(x,x_train) for x_train in self.X_train]
@@ -25,5 +25,11 @@ class kNN:
         k_indices = np.argsort(distances)[:self.k]
         k_nearest_labels = [self.y_train[i] for i in k_indices]
 
-        most_common = Counter(k_nearest_labels).most_common
-        return most_common[0][0]
+        most_common = Counter(k_nearest_labels).most_common(1)[0][0]
+        return most_common
+
+    def predict_one(self, x):
+        x = np.asarray(x)
+        if x.ndim != 1:
+            raise ValueError("predict_one expects a 1D feature vector")
+        return self._predict(x)
