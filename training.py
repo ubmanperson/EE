@@ -25,9 +25,3 @@ print(predictions)
 
 acc = np.sum(predictions == y_test) / len(y_test)
 print(acc)
-
-# Classify a new custom point (use same 4 iris features order)
-# Example: sepal length, sepal width, petal length, petal width
-new_point = np.array([5.1, 3.3, 1.7, 0.5])
-label = clf.predict_one(new_point)
-print("New point label:", label)
