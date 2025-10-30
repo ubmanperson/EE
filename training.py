@@ -1,57 +1,104 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from kNN import kNN
 
-# Load MNIST digits dataset
-digits = datasets.load_digits()
-X, y = digits.data, digits.target
+# Optional: EMNIST (letters)
+import torch
+from torchvision import datasets as tv_datasets, transforms
 
-# Scale features — kNN works better with normalized features
-scaler = StandardScaler()
-X = scaler.fit_transform(X)
+# -------------------------------
+# CONFIG — Choose dataset here
+# -------------------------------
+USE_EMNIST_LETTERS = True   # False → MNIST digits; True → EMNIST letters
 
-# Split train/test
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=1234
-)
+# -------------------------------
+# Load dataset
+# -------------------------------
+if USE_EMNIST_LETTERS:
+    print("Loading EMNIST Letters...")
+    transform = transforms.Compose([
+        transforms.ToTensor(),              # Convert to tensor
+        transforms.Lambda(lambda x: x.view(-1))  # Flatten 28x28 to 784
+    ])
 
-# Visualize a few examples
-fig, axes = plt.subplots(2, 5, figsize=(10, 5))
-for ax, img, label in zip(axes.ravel(), digits.images, y):
-    ax.set_axis_off()
-    ax.imshow(img, cmap=plt.cm.gray_r)
-    ax.set_title(str(label))
-plt.show()
+    train_set = tv_datasets.EMNIST(
+        root='./data', split='letters', train=True,
+        download=True, transform=transform
+    )
+    test_set = tv_datasets.EMNIST(
+        root='./data', split='letters', train=False,
+        download=True, transform=transform
+    )
 
-# Initialize and train custom kNN
-clf = kNN(k=3)
+    X_train = train_set.data.view(len(train_set), -1).numpy().astype(np.float32)
+    y_train = train_set.targets.numpy()
+    X_test = test_set.data.view(len(test_set), -1).numpy().astype(np.float32)
+    y_test = test_set.targets.numpy()
+
+    # Normalize pixel values [0, 1]
+    X_train /= 255.0
+    X_test /= 255.0
+
+    print(f"EMNIST letters loaded. Train: {X_train.shape}, Test: {X_test.shape}")
+
+else:
+    print("Loading MNIST Digits (scikit-learn)...")
+    digits = datasets.load_digits()
+    X, y = digits.data, digits.target
+
+    # Scale features
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=1234
+    )
+    print(f"Digits loaded. Train: {X_train.shape}, Test: {X_test.shape}")
+
+# -------------------------------
+# Train custom kNN model
+# -------------------------------
+clf = kNN(k=5)
 clf.fit(X_train, y_train)
 
-# Predict test set
-predictions = clf.predict(X_test)
-acc = np.sum(predictions == y_test) / len(y_test)
+# -------------------------------
+# Evaluate on test data
+# -------------------------------
 
-print("Predictions:", predictions[:10])
-print("Accuracy:", acc)
+if USE_EMNIST_LETTERS:
+    n_samples = 2000  # You can increase for more accuracy
+    idx = np.random.choice(len(X_test), n_samples, replace=False)
+    X_sample = X_test[idx]
+    y_sample = y_test[idx]
+    predictions = clf.predict(X_sample)
+    acc = np.sum(predictions == y_sample) / len(y_sample)
+else:
+    predictions = clf.predict(X_test)
+    acc = np.sum(predictions == y_test) / len(y_test)
 
-# Pick a random point from the feature space
-feature_mins = X.min(axis=0)
-feature_maxs = X.max(axis=0)
+print(f"\n Accuracy: {acc*100:.2f}%")
+
+# -------------------------------
+# Single random prediction
+# -------------------------------
 rng = np.random.default_rng()
-random_point = rng.uniform(feature_mins, feature_maxs)
-pred_label_random = clf.predict_one(random_point)
-print("Random point predicted class:", int(pred_label_random))
+if USE_EMNIST_LETTERS:
+    rand_idx = rng.integers(len(X_test))
+    random_point = X_test[rand_idx]
+    pred_label_random = clf.predict_one(random_point)
+    true_label = y_test[rand_idx]
+    img_side = 28
+else:
+    rand_idx = rng.integers(len(X_test))
+    random_point = X_test[rand_idx]
+    pred_label_random = clf.predict_one(random_point)
+    true_label = y_test[rand_idx]
+    img_side = 8
 
-# Visualize a single test sample and prediction
-sample_idx = 0
-sample_image = X_test[sample_idx].reshape(8, 8)
-sample_label = predictions[sample_idx]
-
-plt.imshow(sample_image, cmap=plt.cm.gray_r)
-plt.title(f"Predicted: {sample_label}, True: {y_test[sample_idx]}")
+plt.imshow(random_point.reshape(img_side, img_side), cmap='gray')
+plt.title(f"Predicted: {int(pred_label_random)}, True: {int(true_label)}")
 plt.axis('off')
 plt.show()
