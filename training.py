@@ -61,7 +61,7 @@ else:
 # -------------------------------
 # Train custom kNN model
 # -------------------------------
-clf = kNN(k=5)
+clf = kNN(k=3)
 clf.fit(X_train, y_train)
 
 # -------------------------------
@@ -69,7 +69,7 @@ clf.fit(X_train, y_train)
 # -------------------------------
 
 if USE_EMNIST_LETTERS:
-    n_samples = 2000  # You can increase for more accuracy
+    n_samples = 100  # You can increase for more accuracy
     idx = np.random.choice(len(X_test), n_samples, replace=False)
     X_sample = X_test[idx]
     y_sample = y_test[idx]
@@ -80,25 +80,3 @@ else:
     acc = np.sum(predictions == y_test) / len(y_test)
 
 print(f"\n Accuracy: {acc*100:.2f}%")
-
-# -------------------------------
-# Single random prediction
-# -------------------------------
-rng = np.random.default_rng()
-if USE_EMNIST_LETTERS:
-    rand_idx = rng.integers(len(X_test))
-    random_point = X_test[rand_idx]
-    pred_label_random = clf.predict_one(random_point)
-    true_label = y_test[rand_idx]
-    img_side = 28
-else:
-    rand_idx = rng.integers(len(X_test))
-    random_point = X_test[rand_idx]
-    pred_label_random = clf.predict_one(random_point)
-    true_label = y_test[rand_idx]
-    img_side = 8
-
-plt.imshow(random_point.reshape(img_side, img_side), cmap='gray')
-plt.title(f"Predicted: {int(pred_label_random)}, True: {int(true_label)}")
-plt.axis('off')
-plt.show()
