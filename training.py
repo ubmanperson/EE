@@ -61,22 +61,21 @@ else:
 # -------------------------------
 # Train custom kNN model
 # -------------------------------
-clf = kNN(k=3)
-clf.fit(X_train, y_train)
+clf = kNN(k=a)
+for a in [1,2,3,4,5,6,7,8.9, 10]:
+    clf.fit(X_train, y_train)
 
 # -------------------------------
 # Evaluate on test data
 # -------------------------------
 
 if USE_EMNIST_LETTERS:
-    n_samples = 100  # You can increase for more accuracy
-    idx = np.random.choice(len(X_test), n_samples, replace=False)
-    X_sample = X_test[idx]
-    y_sample = y_test[idx]
-    predictions = clf.predict(X_sample)
-    acc = np.sum(predictions == y_sample) / len(y_sample)
-else:
-    predictions = clf.predict(X_test)
-    acc = np.sum(predictions == y_test) / len(y_test)
+    n_samples = n
+    for n in [100, 200, 500, 1000, 2000]: # You can increase for more accuracy
+        idx = np.random.choice(len(X_test), n_samples, replace=False)
+        X_sample = X_test[idx]
+        y_sample = y_test[idx]
+        predictions = clf.predict(X_sample)
+        acc = np.sum(predictions == y_sample) / len(y_sample)
+        print(f"\n Accuracy for k={a} and n={n}: {acc*100:.2f}%")
 
-print(f"\n Accuracy: {acc*100:.2f}%")
