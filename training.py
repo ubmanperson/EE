@@ -59,23 +59,27 @@ else:
     print(f"Digits loaded. Train: {X_train.shape}, Test: {X_test.shape}")
 
 # -------------------------------
-# Train custom kNN model
+# Train & evaluate custom kNN model
 # -------------------------------
-clf = kNN(k=a)
-for a in [1,2,3,4,5,6,7,8.9, 10]:
+
+k_values = [1, 2, 3, 4, 5, 6, 7, 8, 10]
+# Limit sample sizes so we do not accidentally ask for more items
+if USE_EMNIST_LETTERS:
+    sample_sizes = [100, 200, 500, 1000, 2000]
+else:
+    # Scikit-learn digits has only 360 test samples; pick smaller chunks
+    sample_sizes = [50, 100, len(X_test)]
+
+for k in k_values:
+    print(f"\nTraining kNN with k={k}")
+    clf = kNN(k=k)
     clf.fit(X_train, y_train)
 
-# -------------------------------
-# Evaluate on test data
-# -------------------------------
-
-if USE_EMNIST_LETTERS:
-    n_samples = n
-    for n in [100, 200, 500, 1000, 2000]: # You can increase for more accuracy
+    for n in sample_sizes:
+        n_samples = min(n, len(X_test))
         idx = np.random.choice(len(X_test), n_samples, replace=False)
         X_sample = X_test[idx]
         y_sample = y_test[idx]
         predictions = clf.predict(X_sample)
         acc = np.sum(predictions == y_sample) / len(y_sample)
-        print(f"\n Accuracy for k={a} and n={n}: {acc*100:.2f}%")
-
+        print(f"Accuracy for k={k}, n={n_samples}: {acc*100:.2f}%")
